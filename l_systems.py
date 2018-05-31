@@ -2,11 +2,34 @@ import cv2
 import numpy as np
 import math
 import image_similarity
-# from PIL import Image, ImageDraw
 
-image_src = cv2.imread("fractal.jpg")
+
+def load_image(path):
+    image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    h, w = image.shape[:2]
+    mask = image == 255
+    top = 0
+    bottom = h-1
+    left = 0
+    right = w-1
+
+    while np.sum(mask[top, :]) == 0:
+        top += 1
+    while np.sum(mask[bottom, :]) == 0:
+        bottom -= 1
+    while np.sum(mask[:, left]) == 0:
+        left += 1
+    while np.sum(mask[:, right]) == 0:
+        right -= 1
+
+    return image[top:bottom, left:right]
+
+
+# image_src = cv2.imread("fractal.jpg")
+image_src = load_image("fractal.png")
 visited = np.zeros(image_src.shape[:2])
 h, w = image_src.shape[:2]
+
 
 def subimage(image, center, theta, width, height):
     if 45 < theta <= 90:
@@ -49,10 +72,10 @@ def subimage_best(image, bottom_center, theta, scale):
     s_x = center[0] - v_x[0] * (width / 2) - v_y[0] * (height / 2)
     s_y = center[1] - v_x[1] * (width / 2) - v_y[1] * (height / 2)
     mapping = np.array([[v_x[0],v_y[0], s_x], [v_x[1],v_y[1], s_y]])
-    if image is None:
-        print("Error")
-    else:
-        print("shape for warp = {}".format(str(image.shape)))
+    # if image is None:
+    #     print("Error")
+    # else:
+    #     print("shape for warp = {}".format(str(image.shape)))
 
     return cv2.warpAffine(image, mapping, (width, height), flags=cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
 
@@ -129,12 +152,15 @@ def equal(image, subimage):
 
 def find_elem(x_start, y_start):
     bottom_center = (x_start, y_start)
-    for theta in range(-90, 90):
-        for scale in np.arange(0.1, 0.9, 0.1):
+    # for theta in range(-90, 90):
+    for theta in [-25.0, 0.0, 25.0]:
+        # for scale in np.arange(0.1, 0.9, 0.1):
+        for scale in [0.5]:
             sub_img = subimage_best(image_src, bottom_center, theta, scale)
             if equal(image_src, sub_img):
                 return True, theta, scale
-    return False
+    return False, 0, 0
+
 
 l_system1 = []
 
@@ -144,7 +170,7 @@ def bypass(back_color, x, y):
         return
     if visited[y, x] == 1:
         return
-    if image_src[y, x, 0] != back_color[0]:
+    if image_src[y, x] != back_color:
         visited[y, x] = 1
         is_sub_img, theta, scale = find_elem(x, y)
         if is_sub_img:
@@ -162,5 +188,12 @@ def bypass(back_color, x, y):
 print(image_src.shape)
 print(visited.shape)
 
-bypass((255, 255, 255), w // 2, h - 1)
-print(l_system1)
+last_row = image_src[-1, :]
+x = np.argmin(last_row)
+
+bypass(255, x, h - 1)
+# print(l_system1)
+
+cv2.imshow("Input", image_src)
+cv2.imshow("Visited", visited)
+cv2.waitKey()
