@@ -7,7 +7,7 @@ from analyze_image import load_image, show_debug_image, subimage_best, equal
 
 sys.setrecursionlimit(50000)
 
-image_src = load_image("fractal.png")
+image_src = load_image("images/fractal.png")
 visited = np.zeros(image_src.shape[:2])
 matches = np.zeros(image_src.shape[:2])
 h, w = image_src.shape[:2]
