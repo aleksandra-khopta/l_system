@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import argparse
 from collections import deque
+import pickle
 
 from analyze_image import load_image, show_debug_image, subimage_best, equal, create_debug_image
 
@@ -51,7 +52,9 @@ def valid_position(p, image, background_color, visited):
 
 def search_matches(image_src, start, back_color):
     visited = np.zeros(image_src.shape[:2])
-    matches = np.zeros(image_src.shape[:2])
+    match_mask = np.zeros(image_src.shape[:2])
+    distances = -np.ones(image_src.shape[:2])
+    matches = {}
 
     if not valid_position(start, image_src, back_color, visited):
         return
@@ -59,21 +62,24 @@ def search_matches(image_src, start, back_color):
     q = deque()
     q.append(start)
     visited[start] = 1
+    distances[start] = 0
 
     while q:
         y, x = q.popleft()
-        show_debug_image("Visited", visited, matches, (x, y), wait_time=1)
+        show_debug_image("Visited", visited, match_mask, (x, y), wait_time=1)
         is_sub_img, theta, scale = find_elem(image_src, x, y)
         if is_sub_img:
-            matches[y, x] = 1
+            match_mask[y, x] = 1
+            matches[(y,x)] = theta, scale
 
         neighbours = [(y + dy, x + dx) for dy, dx in _POSSIBLE_MOVES if valid_position((y + dy, x + dx), image_src, back_color, visited)]
         for p in neighbours:
             q.append(p)
             visited[p] = 1
+            distances[p] = distances[y, x] + 1
 
-    dbg_image = create_debug_image(visited, matches, (start[1], start[0]))
-    return visited, matches, dbg_image
+    dbg_image = create_debug_image(visited, match_mask, (start[1], start[0]))
+    return visited, match_mask, matches, dbg_image, distances
 
 
 def find_start(image_src):
@@ -90,13 +96,23 @@ def main():
 
     image_src = load_image(args.input_image)
     start = find_start(image_src)
-    visited, matches, dbg_image = search_matches(image_src, start, 255)
+    visited, match_mask, matches, dbg_image, distances = search_matches(image_src, start, 255)
 
+    with open("debug/visited.pickle", "wb") as f:
+        pickle.dump(visited, f)
+    with open("debug/match_mask.pickle", "wb") as f:
+        pickle.dump(match_mask, f)
+    with open("debug/matches.pickle", "wb") as f:
+        pickle.dump(matches, f)
+    with open("debug/distances.pickle", "wb") as f:
+        pickle.dump(distances, f)
+
+    cv2.imshow("Distances", np.float32(distances) / np.max(distances))
     cv2.imshow("Input", image_src)
     cv2.imshow("Visited", visited)
     cv2.imshow("Debug", dbg_image)
+    cv2.imwrite("debug/match_map.png", dbg_image)
     cv2.waitKey()
-
 
 
 if __name__ == "__main__":
