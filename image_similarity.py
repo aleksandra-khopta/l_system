@@ -68,16 +68,3 @@ def is_sample_in_image(image, sample, kernel_size=3):
 
     # return np.sum(overlap) / np.sum(pattern), max_correlation_around
     return np.sum(overlap) / np.sum(pattern), 0
-
-#
-# origin_file = "fractal.jpg"
-# sample_file = "subimage4.png"
-#
-# origin = cv2.imread(origin_file)
-# sample = cv2.imread(sample_file)
-#
-# similarity, corr = is_sample_in_image(origin, sample, kernel_size=5)
-# print("Similarity = {:.2f}".format(similarity))
-# print("Correlation = {:.2f}".format(corr))
-#
-# cv2.waitKey()
