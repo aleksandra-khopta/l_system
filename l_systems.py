@@ -88,7 +88,7 @@ def main():
     parser.add_argument('input_image', type=str, help='Input image with fractal')
     args = parser.parse_args()
 
-    image_src = load_image("images/fractal.png")
+    image_src = load_image(args.input_image)
     start = find_start(image_src)
     visited, matches, dbg_image = search_matches(image_src, start, 255)
 
