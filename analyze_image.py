@@ -42,7 +42,7 @@ def show_debug_image(window_name, input_image, points_mask, point, wait_time=-1)
     _counter += 1
     if _counter % _VISUALIZATION_STEP == 0:
         res_image = create_debug_image(input_image, points_mask, point)
-        cv2.imwrite("debug/matches.png", res_image)
+        cv2.imwrite("debug/match_map_.png", res_image)
         cv2.imshow(window_name, res_image)
         cv2.waitKey(wait_time)
 
