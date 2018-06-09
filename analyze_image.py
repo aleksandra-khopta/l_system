@@ -34,10 +34,10 @@ def show_debug_image(window_name, input_image, points_mask, point, wait_time=-1)
     global _counter
     _counter += 1
     if _counter % _VISUALIZATION_STEP == 0:
-        res_image = np.stack([input_image, input_image, input_image], axis=-1)
+        res_image = 255 * np.stack([input_image, input_image, input_image], axis=-1)
         res_image[points_mask == 1] = (0, 0, 200)
         cv2.circle(res_image, point, 3, (200, 0, 0), thickness=2)
-        cv2.imwrite("debug.png", res_image)
+        cv2.imwrite("debug/matches.png", res_image)
         cv2.imshow(window_name, res_image)
         cv2.waitKey(wait_time)
 
