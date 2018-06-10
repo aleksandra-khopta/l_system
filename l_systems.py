@@ -15,18 +15,18 @@ def rule2_from_scale(scale):
     return rule2_str
 
 
+def put_in_braces(str):
+    return "[" + str + "]"
+
+
 def process_structures(match_structures):
     visited, match_mask, matches, distances = match_structures
 
-    # show_structures(MatchStructures(visited, match_mask, matches, distances))
-    # cv2.imshow("Debug", create_debug_image(visited, match_mask, (0, 0)))
-    # cv2.waitKey()
-
-    labaled_array, features_num = label(match_mask)
+    labeled_array, features_num = label(match_mask)
 
     filtered_matches = {}
     for label_index in range(1, features_num + 1):
-        label_mask = labaled_array == label_index
+        label_mask = labeled_array == label_index
         label_coordinates = np.asarray(np.column_stack(np.ma.where(label_mask)))
         scores = np.zeros_like(match_mask)
         for y, x in label_coordinates:
@@ -35,13 +35,31 @@ def process_structures(match_structures):
         max_score_position = np.unravel_index(np.argmax(scores), scores.shape)
         filtered_matches[max_score_position] = [matches[max_score_position], distances[max_score_position]]
 
-    # print(filtered_matches)
+    sorted_match_list = [x[1] for x in sorted(filtered_matches.items(), key=lambda x: x[1][1])]
+    print(sorted_match_list)
+    current_distance = 0
+
+    rule1_str = "X="
+    for matches, distance in sorted_match_list:
+        if distance > current_distance:
+            rule1_str += "F"
+            current_distance = distance
+        sorted_by_angle = sorted(matches, key=lambda m: m.theta)
+        for match in sorted_by_angle:
+            if match.theta < 0:
+                match_str = "-X"
+            elif match.theta > 0:
+                match_str = "+X"
+            else:
+                match_str = "X"
+            rule1_str += put_in_braces(match_str)
+
     angle = np.max([match.theta for match in current_matches for current_matches in filtered_matches])
     scale = np.max([match.scale for match in current_matches for current_matches in filtered_matches])
 
     angle_str = str(angle)
     axiom_str = "X"
-    rule1_str = "rule1"
+    # rule1_str = "rule1"
     rule2_str = rule2_from_scale(scale)
 
     l_system_str = "{}\n{}\n{}\n{}".format(angle_str, axiom_str, rule1_str, rule2_str)

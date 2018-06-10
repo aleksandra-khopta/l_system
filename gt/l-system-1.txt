@@ -1,4 +1,4 @@
 25
 X
-X=F[+X][-X]FX
+X=F[-X][+X]F[X]
 F=FF
