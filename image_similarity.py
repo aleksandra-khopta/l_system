@@ -41,4 +41,6 @@ def is_sample_in_image(image, sample, kernel_size=3):
         print("overlap sum = {:.2f}".format(np.sum(overlap)))
         print("pattern sum = {:.2f}".format(np.sum(pattern)))
 
+        cv2.waitKey()
+
     return np.sum(overlap) / np.sum(pattern)

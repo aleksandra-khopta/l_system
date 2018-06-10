@@ -5,7 +5,7 @@ import l_systems
 
 
 # _TEST_CASES = range(5)
-_TEST_CASES = [0, 3]
+_TEST_CASES = [0,1,2]
 _TEST_IMAGES = ["images/fractal{}.png".format(i) for i in _TEST_CASES]
 _TEST_LSYSTEMS = ["gt/l-system-{}.txt".format(i) for i in _TEST_CASES]
 
@@ -45,7 +45,8 @@ def main():
         print(l_systems.lsystem_to_str(gt_lsystem))
         print("-------------------------")
         print("Calculated L-system:")
-        print(l_systems.lsystem_to_str(l_system))
+        if l_system:
+            print(l_systems.lsystem_to_str(l_system))
         print("-------------------------")
 
         if compare_systems(gt_lsystem, l_system):

@@ -26,6 +26,8 @@ def line_len(line):
 
 def calculate_major_angle(image_src):
     lines, width, prec, nfa = cv2.createLineSegmentDetector().detect(image_src)
+    # cv2.imshow("Lines", cv2.createLineSegmentDetector().drawSegments(image_src, lines))
+    # cv2.waitKey()
     # line_len_threshold = max(image_src.shape[:2]) // 30
     line_len_threshold = 8
 

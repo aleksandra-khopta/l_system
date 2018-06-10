@@ -37,7 +37,7 @@ def process_structures(match_structures, visual=False):
     labeled_array, features_num = label(dilation, structure=np.ones((3, 3)))
     labeled_array = labeled_array * match_mask
     if not features_num:
-        return ""
+        return []
 
     filtered_matches = {}
     for label_index in range(1, features_num + 1):
@@ -77,7 +77,7 @@ def process_structures(match_structures, visual=False):
     print(filtered_matches)
     print(all_detected_angles)
 
-    angle = np.max(all_detected_angles)
+    angle = np.min(list(filter(lambda x: x > 5, np.abs(all_detected_angles))))
     scale = np.max([match.scale for match in current_matches for current_matches in filtered_matches])
 
     angle_str = str(angle) + '\n'

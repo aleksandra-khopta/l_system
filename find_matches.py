@@ -86,7 +86,7 @@ def find_start(image_src):
 def generate_angle_range(angle):
     angle_range = [0]
     current_angle = angle
-    while current_angle < 90:
+    while current_angle < 45:
         angle_range.insert(0, -current_angle)
         angle_range.append(current_angle)
         current_angle += angle
