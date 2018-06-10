@@ -1,25 +1,24 @@
-import cv2
-import numpy as np
 import argparse
-from collections import deque
-import pickle
 
+from collections import deque
 from analyze_image import load_image, show_debug_image, subimage_best, equal, create_debug_image
+from match_structures import *
 
 
 _POSSIBLE_MOVES = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-_POSSIBLE_THETA = [-25, 0, 25]
-_POSSIBLE_SCALE = [0.5]
+_RANGE_THETA = [-25, 0, 25]
+_RANGE_SCALE = [0.5]
 
 
-def find_elem(image_src, x_start, y_start):
-    bottom_center = (x_start, y_start)
-    for theta in _POSSIBLE_THETA:
-        for scale in _POSSIBLE_SCALE:
+def find_matches_at_point(image_src, x_start, y_start):
+    matches = []
+    bottom_center = x_start, y_start
+    for theta in _RANGE_THETA:
+        for scale in _RANGE_SCALE:
             sub_img = subimage_best(image_src, bottom_center, theta, scale)
             if equal(image_src, sub_img):
-                return True, theta, scale
-    return False, 0, 0
+                matches.append(Match(theta, scale))
+    return matches
 
 
 # def bypass(image_src, visited, matches, back_color, x, y):
@@ -67,19 +66,21 @@ def search_matches(image_src, start, back_color):
     while q:
         y, x = q.popleft()
         show_debug_image("Visited", visited, match_mask, (x, y), wait_time=1)
-        is_sub_img, theta, scale = find_elem(image_src, x, y)
-        if is_sub_img:
+        # is_sub_img, theta, scale = find_matches_at_point(image_src, x, y)
+        point_matches = find_matches_at_point(image_src, x, y)
+        if point_matches:
             match_mask[y, x] = 1
-            matches[(y,x)] = theta, scale
+            matches[(y,x)] = point_matches
 
-        neighbours = [(y + dy, x + dx) for dy, dx in _POSSIBLE_MOVES if valid_position((y + dy, x + dx), image_src, back_color, visited)]
+        neighbours = [(y + dy, x + dx) for dy, dx in _POSSIBLE_MOVES
+                      if valid_position((y + dy, x + dx), image_src, back_color, visited)]
         for p in neighbours:
             q.append(p)
             visited[p] = 1
             distances[p] = distances[y, x] + 1
 
     dbg_image = create_debug_image(visited, match_mask, (start[1], start[0]))
-    return visited, match_mask, matches, dbg_image, distances
+    return MatchStructures(visited, match_mask, matches, distances), dbg_image
 
 
 def find_start(image_src):
@@ -92,24 +93,17 @@ def find_start(image_src):
 def main():
     parser = argparse.ArgumentParser(description='Calculates L-system by fractal image.')
     parser.add_argument('input_image', type=str, help='Input image with fractal')
+    parser.add_argument('--dump_folder', type=str, default="debug", help='Output folder for dumping matching structures')
     args = parser.parse_args()
 
     image_src = load_image(args.input_image)
     start = find_start(image_src)
-    visited, match_mask, matches, dbg_image, distances = search_matches(image_src, start, 255)
+    # visited, match_mask, matches, dbg_image, distances = search_matches(image_src, start, 255)
+    match_structures, dbg_image = search_matches(image_src, start, 255)
 
-    with open("debug/visited.pickle", "wb") as f:
-        pickle.dump(visited, f)
-    with open("debug/match_mask.pickle", "wb") as f:
-        pickle.dump(match_mask, f)
-    with open("debug/matches.pickle", "wb") as f:
-        pickle.dump(matches, f)
-    with open("debug/distances.pickle", "wb") as f:
-        pickle.dump(distances, f)
+    dump_structures(args.dump_folder, match_structures)
+    show_structures(match_structures)
 
-    cv2.imshow("Distances", np.float32(distances) / np.max(distances))
-    cv2.imshow("Input", image_src)
-    cv2.imshow("Visited", visited)
     cv2.imshow("Debug", dbg_image)
     cv2.imwrite("debug/match_map.png", dbg_image)
     cv2.waitKey()
