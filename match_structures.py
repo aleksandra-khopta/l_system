@@ -5,7 +5,7 @@ import numpy as np
 from collections import namedtuple
 
 
-Match = namedtuple("Match",["theta", "scale"])
+Match = namedtuple("Match",["theta", "scale", "score"])
 MatchStructures = namedtuple("MatchStructures", ["visited", "match_mask", "matches", "distances"])
 
 
