@@ -19,10 +19,23 @@ def put_in_braces(str):
     return "[" + str + "]"
 
 
-def process_structures(match_structures):
+def lsystem_to_str(lsystem):
+    angle_str, axiom_str, rule1_str, rule2_str = lsystem
+    l_system_str = "{}{}{}{}".format(angle_str, axiom_str, rule1_str, rule2_str)
+    return l_system_str
+
+
+def process_structures(match_structures, visual=False):
     visited, match_mask, matches, distances = match_structures
 
-    labeled_array, features_num = label(match_mask)
+    if visual:
+        show_structures(match_structures)
+        cv2.imshow("Debug", create_debug_image(visited, match_mask, (0,0)))
+        cv2.waitKey()
+
+    dilation = cv2.dilate(match_mask, np.ones((5,5),np.uint8), iterations=1)
+    labeled_array, features_num = label(dilation, structure=np.ones((3, 3)))
+    labeled_array = labeled_array * match_mask
     if not features_num:
         return ""
 
@@ -31,6 +44,7 @@ def process_structures(match_structures):
         label_mask = labeled_array == label_index
         label_coordinates = np.asarray(np.column_stack(np.ma.where(label_mask)))
         scores = np.zeros_like(match_mask)
+
         for y, x in label_coordinates:
             current_matches = matches[(y, x)]
             scores[y, x] = np.sum([match.score for match in current_matches])
@@ -38,44 +52,51 @@ def process_structures(match_structures):
         filtered_matches[max_score_position] = [matches[max_score_position], distances[max_score_position]]
 
     sorted_match_list = [x[1] for x in sorted(filtered_matches.items(), key=lambda x: x[1][1])]
-    print(sorted_match_list)
+    # print(sorted_match_list)
     current_distance = 0
 
+    all_detected_angles = []
     rule1_str = "X="
     for matches, distance in sorted_match_list:
-        if distance > current_distance:
+        if distance > current_distance + 5:
             rule1_str += "F"
             current_distance = distance
-        sorted_by_angle = sorted(matches, key=lambda m: m.theta)
+        sorted_by_angle = sorted(matches, key=lambda m: -m.theta)
         for match in sorted_by_angle:
-            if match.theta < 0:
-                match_str = "-X"
-            elif match.theta > 0:
+            theta = match.theta
+            all_detected_angles.append(theta)
+            d_theta = 2
+            if theta < -d_theta:
                 match_str = "+X"
+            elif theta > d_theta:
+                match_str = "-X"
             else:
                 match_str = "X"
             rule1_str += put_in_braces(match_str)
 
-    angle = np.max([match.theta for match in current_matches for current_matches in filtered_matches])
+    print(filtered_matches)
+    print(all_detected_angles)
+
+    angle = np.max(all_detected_angles)
     scale = np.max([match.scale for match in current_matches for current_matches in filtered_matches])
 
-    angle_str = str(angle)
-    axiom_str = "X"
-    # rule1_str = "rule1"
-    rule2_str = rule2_from_scale(scale)
+    angle_str = str(angle) + '\n'
+    axiom_str = "X\n"
+    rule1_str = rule1_str + '\n'
+    rule2_str = rule2_from_scale(scale) + '\n'
 
-    l_system_str = "{}\n{}\n{}\n{}".format(angle_str, axiom_str, rule1_str, rule2_str)
-    return l_system_str
+    return [angle_str, axiom_str, rule1_str, rule2_str]
 
 
 def main():
     parser = argparse.ArgumentParser(description='Calculates L-system by fractal image.')
     parser.add_argument('input_folder', type=str, help='Folder with dumped structures after searching matches')
+    parser.add_argument('--visual', type=bool, default=False, help='Enable visualization')
     args = parser.parse_args()
 
     match_structures = load_structures(args.input_folder)
-    l_system_str = process_structures(match_structures)
-    print(l_system_str)
+    angle_str, axiom_str, rule1_str, rule2_str = process_structures(match_structures, visual=args.visual)
+    print(lsystem_to_str([angle_str, axiom_str, rule1_str, rule2_str]))
 
 
 if __name__ == "__main__":

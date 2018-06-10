@@ -9,6 +9,55 @@ _VISUALIZATION_STEP = 10
 _counter = 0
 
 
+def line_to_angle(line):
+    x1, y1, x2, y2 = line
+    angle = np.rad2deg(np.arctan2(x1 - x2, y1 - y2))
+    while angle < -90:
+        angle += 180
+    while angle > 90:
+        angle -= 180
+    return angle
+
+
+def line_len(line):
+    x1, y1, x2, y2 = line
+    return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+
+def calculate_major_angle(image_src):
+    lines, width, prec, nfa = cv2.createLineSegmentDetector().detect(image_src)
+    # line_len_threshold = max(image_src.shape[:2]) // 30
+    line_len_threshold = 8
+
+    filtered_lines = filter(lambda l: line_len(l) > line_len_threshold, map(lambda l: l[0], lines))
+
+    angles = [line_to_angle(line) for line in filtered_lines]
+    hist = np.histogram(angles, bins=range(-90, 90))
+
+    sorted_angles = sorted(zip(hist[1], hist[0]), key=lambda x: -x[1])
+    sorted_angles = list(filter(lambda pair: pair[1] > 2, sorted_angles))
+    sorted_angles = sorted(sorted_angles[:10], key=lambda pair: pair[0])
+
+    min_angle = 5
+    negative_angles = list(filter(lambda x: x < -min_angle, [a[0] for a in sorted_angles]))
+    positive_angles = list(filter(lambda x: x > min_angle, [a[0] for a in sorted_angles]))
+    negative_candidate_angle = max(negative_angles or [None])
+    positive_candidate_angle = min(positive_angles or [None])
+
+    # print(negative_candidate_angle)
+    # print(positive_candidate_angle)
+
+    if negative_candidate_angle is None:
+        major_angle = positive_candidate_angle
+    elif positive_candidate_angle is None:
+        major_angle = negative_candidate_angle
+    elif abs(negative_candidate_angle + positive_candidate_angle) < min_angle:
+        major_angle = (positive_candidate_angle - negative_candidate_angle) / 2
+    else:
+        major_angle = min([positive_candidate_angle, -negative_candidate_angle])
+    return major_angle
+
+
 def load_image(path):
     image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     h, w = image.shape[:2]
