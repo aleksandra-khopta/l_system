@@ -1,3 +1,5 @@
+#!/bin/python
+
 import argparse
 
 from collections import deque
@@ -50,7 +52,7 @@ def valid_position(p, image, background_color, visited):
     return 0 <= y < h and 0 <= x < w and visited[p] == 0 and image[p] != background_color
 
 
-def search_matches(image_src, start, back_color, similarity_threshold):
+def search_matches(image_src, start, back_color, similarity_threshold, visual=False):
     visited = np.zeros(image_src.shape[:2])
     match_mask = np.zeros(image_src.shape[:2])
     distances = -np.ones(image_src.shape[:2])
@@ -66,8 +68,8 @@ def search_matches(image_src, start, back_color, similarity_threshold):
 
     while q:
         y, x = q.popleft()
-        show_debug_image("Visited", visited, match_mask, (x, y), wait_time=1)
-        # is_sub_img, theta, scale = find_matches_at_point(image_src, x, y)
+        if visual:
+            show_debug_image("Visited", visited, match_mask, (x, y), wait_time=1)
         point_matches = find_matches_at_point(image_src, x, y, similarity_threshold)
         if point_matches:
             match_mask[y, x] = 1
@@ -91,6 +93,22 @@ def find_start(image_src):
     return h-1, x
 
 
+def process_image(input_image, background_color=255, similarity_threshold=0.8, dump_folder=None, visual=False):
+    image_src = load_image(input_image)
+    start = find_start(image_src)
+    match_structures, dbg_image = search_matches(image_src, start, background_color, similarity_threshold)
+
+    if dump_folder:
+        dump_structures(dump_folder, match_structures)
+    if visual:
+        show_structures(match_structures)
+        cv2.imshow("Debug", dbg_image)
+        cv2.imwrite("debug/match_map.png", dbg_image)
+        cv2.waitKey()
+
+    return match_structures
+
+
 def main():
     parser = argparse.ArgumentParser(description='Calculates L-system by fractal image.')
     parser.add_argument('input_image', type=str, help='Input image with fractal')
@@ -99,21 +117,10 @@ def main():
                         help='Background color of fractal image (1-channel value)')
     parser.add_argument('--similarity_threshold', type=float, default=0.8,
                         help='Minimum score for pattern to be matched')
+    parser.add_argument('--visual', type=bool, default=False, help='Enable visualization')
 
     args = parser.parse_args()
-    print(args)
-
-    image_src = load_image(args.input_image)
-    start = find_start(image_src)
-    # visited, match_mask, matches, dbg_image, distances = search_matches(image_src, start, 255)
-    match_structures, dbg_image = search_matches(image_src, start, args.background_color, args.similarity_threshold)
-
-    dump_structures(args.dump_folder, match_structures)
-    show_structures(match_structures)
-
-    cv2.imshow("Debug", dbg_image)
-    cv2.imwrite("debug/match_map.png", dbg_image)
-    cv2.waitKey()
+    process_image(args.input_image, args.background_color, args.similarity_threshold, args.dump_folder)
 
 
 if __name__ == "__main__":
