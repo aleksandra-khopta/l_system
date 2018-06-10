@@ -4,8 +4,8 @@ import find_matches
 import l_systems
 
 
-# _TEST_CASES = range(5)
-_TEST_CASES = [0,1,2]
+_TEST_CASES = range(3)
+# _TEST_CASES = [2]
 _TEST_IMAGES = ["images/fractal{}.png".format(i) for i in _TEST_CASES]
 _TEST_LSYSTEMS = ["gt/l-system-{}.txt".format(i) for i in _TEST_CASES]
 

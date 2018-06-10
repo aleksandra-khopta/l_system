@@ -22,6 +22,8 @@ def is_sample_in_image(image, sample, kernel_size=3):
     h, w = sample.shape[:2]
     scaled_image = _scale_image(image, w, h)
 
+    global _DEBUG
+
     if _DEBUG:
         cv2.imshow("Scaled", scaled_image)
 
@@ -42,5 +44,8 @@ def is_sample_in_image(image, sample, kernel_size=3):
         print("pattern sum = {:.2f}".format(np.sum(pattern)))
 
         cv2.waitKey()
+    #
+    # if np.sum(overlap) / np.sum(pattern) > 0.7:
+    #     _DEBUG = True
 
     return np.sum(overlap) / np.sum(pattern)

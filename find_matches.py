@@ -94,6 +94,11 @@ def generate_angle_range(angle):
 
 
 def process_image(input_image, background_color=255, similarity_threshold=0.7, dump_folder=None, visual=False):
+    global _FOUND_SCALE
+    global _FOUND_D_THETA
+    _FOUND_SCALE = []
+    _FOUND_D_THETA = []
+
     image_src = load_image(input_image)
     start = find_start(image_src)
     major_theta = calculate_major_angle(image_src)
