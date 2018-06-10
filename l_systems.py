@@ -23,6 +23,8 @@ def process_structures(match_structures):
     visited, match_mask, matches, distances = match_structures
 
     labeled_array, features_num = label(match_mask)
+    if not features_num:
+        return ""
 
     filtered_matches = {}
     for label_index in range(1, features_num + 1):
