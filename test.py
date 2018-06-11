@@ -2,7 +2,7 @@
 
 import find_matches
 import l_systems
-
+import time
 
 _TEST_CASES = range(3)
 # _TEST_CASES = [2]
@@ -36,8 +36,10 @@ def main():
     for tc, image_file, gt_file in zip(_TEST_CASES, _TEST_IMAGES, _TEST_LSYSTEMS):
         print(">>>>> Evaluate {} <<<<<".format(image_file))
 
+        start = time.time()
         match_structures = find_matches.process_image(image_file, dump_folder="debug/t{}".format(tc))
         l_system = l_systems.process_structures(match_structures)
+        end = time.time()
         gt_lsystem = load_lsystem(gt_file)
 
         print("-------------------------")
@@ -47,6 +49,7 @@ def main():
         print("Calculated L-system:")
         if l_system:
             print(l_systems.lsystem_to_str(l_system))
+            print("Time: {:.2f} sec".format(end - start))
         print("-------------------------")
 
         if compare_systems(gt_lsystem, l_system):
